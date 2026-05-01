@@ -1,0 +1,43 @@
+# Node modules
+node_modules/
+
+# Environment variables
+.env
+.env.*
+!.env.example
+
+# Cache folders
+.cache/
+.cache-loader/
+.npm/
+.yarn/
+.yarn/cache/
+.pnpm-store/
+.parcel-cache/
+.next/cache/
+.nuxt/cache/
+.svelte-kit/
+.tmp/
+temp/
+
+# Logs
+logs/
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# Build folders
+dist/
+build/
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# IDE files
+.vscode/
+.idea/
+
+# Coverage
+coverage/
