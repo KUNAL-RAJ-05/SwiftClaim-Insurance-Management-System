@@ -1,83 +1,172 @@
-import React from 'react';
+import React, { useEffect, useState } from 'react';
 import { Link, useLocation } from 'react-router-dom';
 import { useWeb3 } from '../../context/Web3Context';
-import { Shield, ShieldAlert, FileText, Upload, PlusCircle, User, LogOut } from 'lucide-react';
+import {
+  Shield, LayoutDashboard, ShoppingBag, FileText, Upload,
+  ClipboardList, PlusCircle, Wallet
+} from 'lucide-react';
 
 const Header = () => {
-  const { account, isAdmin, connectWallet, isConnecting } = useWeb3();
+  const { account, isAdmin, contract } = useWeb3();
   const location = useLocation();
+  const [policyCount, setPolicyCount] = useState(null);
+  const [claimCount, setClaimCount]   = useState(null);
 
-  if (!account) return (
-    <header className="header">
-      <div className="logo">
-        <Shield color="var(--neon-green)" size={28} />
-        <span className="gradient-text" style={{ fontSize: '1.5rem', fontWeight: 700, marginLeft: '8px' }}>SwiftClaim</span>
-      </div>
-    </header>
-  );
+  /* ── Dynamic stats ── */
+  useEffect(() => {
+    if (!contract || !account) return;
+
+    const load = async () => {
+      try {
+        if (isAdmin) {
+          const pc = await contract.userPolicyCount();
+          const cc = await contract.claimCount();
+          setPolicyCount(Number(pc));
+          setClaimCount(Number(cc));
+        } else {
+          const ids = await contract.getUserPolicies(account);
+          setPolicyCount(ids.length);
+        }
+      } catch (_) { /* silent */ }
+    };
+
+    load();
+  }, [contract, account, isAdmin]);
+
+  const userNav = [
+    { to: '/user-dashboard', label: 'Dashboard',    icon: <LayoutDashboard size={15} /> },
+    { to: '/marketplace',    label: 'Marketplace',  icon: <ShoppingBag size={15} /> },
+    { to: '/my-policies',    label: 'My Policies',  icon: <FileText size={15} /> },
+    { to: '/submit-claim',   label: 'Submit Claim', icon: <Upload size={15} /> },
+  ];
+
+  const adminNav = [
+    { to: '/admin-dashboard', label: 'Dashboard',     icon: <LayoutDashboard size={15} /> },
+    { to: '/claims',          label: 'Manage Claims', icon: <ClipboardList size={15} /> },
+    { to: '/policies',        label: 'Policy Editor', icon: <PlusCircle size={15} /> },
+  ];
+
+  const navItems = isAdmin ? adminNav : userNav;
 
   return (
-    <header className="header" style={{ display: 'flex', flexDirection: 'column', padding: 0 }}>
-      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', width: '100%', padding: '16px 24px', boxSizing: 'border-box' }}>
-        <div className="logo" style={{ display: 'flex', alignItems: 'center' }}>
-          <Shield color="var(--neon-green)" size={28} />
-          <span className="gradient-text" style={{ fontSize: '1.5rem', fontWeight: 700, marginLeft: '8px' }}>SwiftClaim</span>
-          <span className={`badge ${isAdmin ? 'badge-danger' : 'badge-primary'}`} style={{ marginLeft: '12px' }}>
-            {isAdmin ? 'Admin' : 'User'}
-          </span>
-        </div>
-        <div style={{ display: 'flex', alignItems: 'center', gap: '16px' }}>
-          <div className="badge badge-outline" style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
-            <User size={14} />
-            {account.slice(0, 6)}...{account.slice(-4)}
+    <header className="header">
+      {/* ── Top bar ── */}
+      <div
+        style={{
+          width: '100%',
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'space-between',
+          padding: '0 28px',
+          height: 64,
+          boxSizing: 'border-box',
+        }}
+      >
+        {/* LEFT: Logo */}
+        <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+          <div className="logo-icon">
+            <Shield size={18} color="#fff" />
           </div>
+          <span className="logo-text">
+            Swift<span>Claim</span>
+          </span>
+          {account && (
+            <span
+              className={`badge ${isAdmin ? 'badge-danger' : 'badge-primary'}`}
+              style={{ marginLeft: 6, fontSize: '0.68rem' }}
+            >
+              {isAdmin ? '⚙ Admin' : '👤 User'}
+            </span>
+          )}
+        </div>
+
+        {/* RIGHT: Dynamic stats + wallet chip */}
+        <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
+          {/* Dynamic stat badges — only when connected */}
+          {account && policyCount !== null && (
+            <div
+              style={{
+                display: 'flex',
+                alignItems: 'center',
+                gap: 8,
+              }}
+            >
+              <div
+                title="Policies"
+                style={{
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: 5,
+                  background: 'var(--purple-dim)',
+                  border: '1px solid var(--border)',
+                  borderRadius: 100,
+                  padding: '4px 12px',
+                  fontSize: '0.8rem',
+                  fontWeight: 700,
+                  color: 'var(--purple)',
+                }}
+              >
+                <Shield size={12} />
+                {policyCount} {isAdmin ? 'Policies' : 'My Policies'}
+              </div>
+
+              {isAdmin && claimCount !== null && (
+                <div
+                  title="Claims"
+                  style={{
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: 5,
+                    background: 'var(--warning-dim)',
+                    border: '1px solid rgba(245,158,11,0.25)',
+                    borderRadius: 100,
+                    padding: '4px 12px',
+                    fontSize: '0.8rem',
+                    fontWeight: 700,
+                    color: 'var(--warning)',
+                  }}
+                >
+                  <ClipboardList size={12} />
+                  {claimCount} Claims
+                </div>
+              )}
+            </div>
+          )}
+
+          {/* Wallet address chip */}
+          {account && (
+            <div className="wallet-chip">
+              <Wallet size={13} />
+              {account.slice(0, 6)}…{account.slice(-4)}
+            </div>
+          )}
         </div>
       </div>
-      
-      <div className="tabs" style={{ width: '100%', padding: '0 24px', margin: 0, boxSizing: 'border-box' }}>
-        {isAdmin ? (
-          <>
-            <Link to="/admin-dashboard" className={`tab ${location.pathname === '/admin-dashboard' ? 'active' : ''}`}>
-              <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                <ShieldAlert size={18} /> Dashboard
-              </div>
+
+      {/* ── Nav tabs — only when connected ── */}
+      {account && (
+        <nav
+          style={{
+            display: 'flex',
+            gap: 0,
+            padding: '0 28px',
+            borderTop: '1px solid var(--border-light)',
+            overflowX: 'auto',
+            scrollbarWidth: 'none',
+          }}
+        >
+          {navItems.map(({ to, label, icon }) => (
+            <Link
+              key={to}
+              to={to}
+              className={`nav-tab ${location.pathname === to ? 'active' : ''}`}
+            >
+              {icon}
+              {label}
             </Link>
-            <Link to="/claims" className={`tab ${location.pathname === '/claims' ? 'active' : ''}`}>
-              <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                <FileText size={18} /> Manage Claims
-              </div>
-            </Link>
-            <Link to="/policies" className={`tab ${location.pathname === '/policies' ? 'active' : ''}`}>
-              <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                <PlusCircle size={18} /> Policy Editor
-              </div>
-            </Link>
-          </>
-        ) : (
-          <>
-            <Link to="/user-dashboard" className={`tab ${location.pathname === '/user-dashboard' ? 'active' : ''}`}>
-              <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                <User size={18} /> Dashboard
-              </div>
-            </Link>
-            <Link to="/marketplace" className={`tab ${location.pathname === '/marketplace' ? 'active' : ''}`}>
-              <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                <Shield size={18} /> Marketplace
-              </div>
-            </Link>
-            <Link to="/my-policies" className={`tab ${location.pathname === '/my-policies' ? 'active' : ''}`}>
-              <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                <FileText size={18} /> My Policies
-              </div>
-            </Link>
-            <Link to="/submit-claim" className={`tab ${location.pathname === '/submit-claim' ? 'active' : ''}`}>
-              <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                <Upload size={18} /> Submit Claim
-              </div>
-            </Link>
-          </>
-        )}
-      </div>
+          ))}
+        </nav>
+      )}
     </header>
   );
 };

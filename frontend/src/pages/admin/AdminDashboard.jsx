@@ -9,7 +9,7 @@ const AdminDashboard = () => {
     totalPolicies: 0,
     totalClaims: 0,
     totalPayouts: '0',
-    platformBalance: '0'
+    platformBalance: '0',
   });
   const [templates, setTemplates] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -18,32 +18,28 @@ const AdminDashboard = () => {
     const fetchAdminData = async () => {
       if (contract && provider) {
         try {
-          const userPolCount = await contract.userPolicyCount();
-          const claimCount = await contract.claimCount();
-          const payouts = await contract.totalPayouts();
-          const address = await contract.getAddress();
-          const balance = await provider.getBalance(address);
+          const userPolCount  = await contract.userPolicyCount();
+          const claimCount    = await contract.claimCount();
+          const payouts       = await contract.totalPayouts();
+          const address       = await contract.getAddress();
+          const balance       = await provider.getBalance(address);
 
           setStats({
-            totalPolicies: Number(userPolCount),
-            totalClaims: Number(claimCount),
-            totalPayouts: ethers.formatEther(payouts),
-            platformBalance: ethers.formatEther(balance)
+            totalPolicies:   Number(userPolCount),
+            totalClaims:     Number(claimCount),
+            totalPayouts:    ethers.formatEther(payouts),
+            platformBalance: ethers.formatEther(balance),
           });
 
-          // Fetch Policy Templates
           const templateCount = await contract.policyTemplateCount();
-          const fetchedTemplates = [];
+          const fetched = [];
           for (let i = 1; i <= templateCount; i++) {
             const temp = await contract.policyTemplates(i);
-            if (temp.isActive) {
-              fetchedTemplates.push(temp);
-            }
+            if (temp.isActive) fetched.push(temp);
           }
-          setTemplates(fetchedTemplates);
-
+          setTemplates(fetched);
         } catch (error) {
-          console.error("Error fetching admin data", error);
+          console.error('Error fetching admin data', error);
         } finally {
           setLoading(false);
         }
@@ -52,69 +48,102 @@ const AdminDashboard = () => {
     fetchAdminData();
   }, [contract, provider]);
 
-  if (loading) return <div className="animate-fade-in">Loading admin data...</div>;
+  if (loading) {
+    return (
+      <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', marginTop: '80px', gap: '14px' }}>
+        <div className="spinner" />
+        <p style={{ color: 'var(--text-muted)' }}>Loading admin data…</p>
+      </div>
+    );
+  }
+
+  const statItems = [
+    { icon: <ShieldAlert size={22} />, value: stats.totalPolicies,   label: 'Policies Sold',        color: 'purple'  },
+    { icon: <Users size={22} />,       value: stats.totalClaims,     label: 'Total Claims',         color: 'warning' },
+    { icon: <Database size={22} />,    value: stats.totalPayouts,    label: 'ETH Paid Out',         color: 'danger'  },
+    { icon: <DollarSign size={22} />,  value: stats.platformBalance, label: 'Contract ETH Balance', color: 'success' },
+  ];
+
+  const colorMap = {
+    purple:  'icon-box-purple',
+    warning: 'icon-box-warning',
+    danger:  'icon-box-danger',
+    success: 'icon-box-success',
+  };
 
   return (
     <div className="animate-fade-in">
-      <h2 style={{ marginBottom: '24px' }}>Admin <span className="gradient-text">Overview</span></h2>
-      
-      <div className="grid grid-cols-4" style={{ marginBottom: '40px' }}>
-        <div className="glass-panel" style={{ textAlign: 'center' }}>
-          <ShieldAlert color="var(--neon-green)" size={32} style={{ marginBottom: '16px' }} />
-          <h3 style={{ margin: 0, fontSize: '2rem' }}>{stats.totalPolicies}</h3>
-          <p style={{ margin: 0, color: 'var(--text-muted)' }}>Policies Sold</p>
-        </div>
-        <div className="glass-panel" style={{ textAlign: 'center' }}>
-          <Users color="var(--warning)" size={32} style={{ marginBottom: '16px' }} />
-          <h3 style={{ margin: 0, fontSize: '2rem' }}>{stats.totalClaims}</h3>
-          <p style={{ margin: 0, color: 'var(--text-muted)' }}>Total Claims</p>
-        </div>
-        <div className="glass-panel" style={{ textAlign: 'center' }}>
-          <Database color="var(--danger)" size={32} style={{ marginBottom: '16px' }} />
-          <h3 style={{ margin: 0, fontSize: '2rem' }}>{stats.totalPayouts}</h3>
-          <p style={{ margin: 0, color: 'var(--text-muted)' }}>ETH Paid Out</p>
-        </div>
-        <div className="glass-panel" style={{ textAlign: 'center', border: '1px solid var(--neon-green)' }}>
-          <DollarSign color="var(--neon-green)" size={32} style={{ marginBottom: '16px' }} />
-          <h3 style={{ margin: 0, fontSize: '2rem', color: 'var(--neon-green)' }}>{stats.platformBalance}</h3>
-          <p style={{ margin: 0, color: 'var(--text-muted)' }}>Contract ETH Balance</p>
-        </div>
+      <div className="page-header">
+        <h2>Admin <span className="gradient-text">Overview</span></h2>
+        <p>Platform statistics and active policy templates.</p>
       </div>
 
-      <div className="glass-panel" style={{ marginBottom: '40px' }}>
-        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '16px' }}>
-          <h3 style={{ margin: 0 }}>Active Policy Templates</h3>
+      {/* ── Stat Cards ── */}
+      <div className="grid grid-cols-4" style={{ marginBottom: '32px' }}>
+        {statItems.map(({ icon, value, label, color }) => (
+          <div key={label} className="card" style={{ textAlign: 'center', padding: '20px' }}>
+            <div className={`icon-box ${colorMap[color]}`} style={{ margin: '0 auto 14px' }}>
+              {icon}
+            </div>
+            <div style={{ fontSize: '1.8rem', fontWeight: 800, color: 'var(--text-primary)', lineHeight: 1, marginBottom: '4px' }}>
+              {value}
+            </div>
+            <div style={{ fontSize: '0.8rem', color: 'var(--text-muted)' }}>{label}</div>
+          </div>
+        ))}
+      </div>
+
+      {/* ── Active Templates ── */}
+      <div className="card">
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '20px' }}>
+          <h3 style={{ margin: 0, fontSize: '1rem' }}>Active Policy Templates</h3>
           <span className="badge badge-primary">{templates.length} Active</span>
         </div>
-        
+
         {templates.length === 0 ? (
-          <p style={{ color: 'var(--text-muted)' }}>No active policy templates created yet. Go to Policy Editor to add one.</p>
+          <p style={{ color: 'var(--text-muted)', fontSize: '0.9rem' }}>
+            No active templates yet. Go to Policy Editor to add one.
+          </p>
         ) : (
           <div className="grid grid-cols-3">
             {templates.map((t) => (
-              <div key={t.id.toString()} style={{ background: 'rgba(0,0,0,0.3)', padding: '16px', borderRadius: '12px', border: '1px solid rgba(255,255,255,0.05)' }}>
-                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '12px' }}>
-                  <h4 style={{ margin: 0, color: '#fff' }}>{t.policyType}</h4>
-                  <Shield size={18} color="var(--neon-green)" />
+              <div
+                key={t.id.toString()}
+                style={{
+                  background: 'var(--bg)',
+                  border: '1px solid var(--border-light)',
+                  borderRadius: 'var(--radius-md)',
+                  padding: '16px',
+                }}
+              >
+                {/* Title row */}
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '14px' }}>
+                  <h4 style={{ margin: 0, fontSize: '0.95rem', color: 'var(--text-primary)' }}>
+                    {t.policyType}
+                  </h4>
+                  <div className="icon-box icon-box-purple" style={{ width: 32, height: 32, borderRadius: '8px' }}>
+                    <Shield size={15} />
+                  </div>
                 </div>
-                <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '4px' }}>
-                  <span style={{ color: 'var(--text-muted)', fontSize: '0.85rem' }}>Premium:</span>
-                  <span style={{ color: 'var(--neon-green)', fontSize: '0.85rem', fontWeight: 600 }}>{ethers.formatEther(t.premium)} ETH</span>
+
+                {/* Info rows */}
+                <div className="info-row">
+                  <span className="label">Premium</span>
+                  <span className="value text-purple">{ethers.formatEther(t.premium)} ETH</span>
                 </div>
-                <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '4px' }}>
-                  <span style={{ color: 'var(--text-muted)', fontSize: '0.85rem' }}>Coverage:</span>
-                  <span style={{ fontSize: '0.85rem', fontWeight: 600 }}>{ethers.formatEther(t.coverageAmount)} ETH</span>
+                <div className="info-row">
+                  <span className="label">Coverage</span>
+                  <span className="value">{ethers.formatEther(t.coverageAmount)} ETH</span>
                 </div>
-                <div style={{ display: 'flex', justifyContent: 'space-between' }}>
-                  <span style={{ color: 'var(--text-muted)', fontSize: '0.85rem' }}>Duration:</span>
-                  <span style={{ fontSize: '0.85rem', fontWeight: 600 }}>{Number(t.expiryDuration) / (60 * 60 * 24)} Days</span>
+                <div className="info-row">
+                  <span className="label">Duration</span>
+                  <span className="value">{Number(t.expiryDuration) / (60 * 60 * 24)} Days</span>
                 </div>
               </div>
             ))}
           </div>
         )}
       </div>
-
     </div>
   );
 };
