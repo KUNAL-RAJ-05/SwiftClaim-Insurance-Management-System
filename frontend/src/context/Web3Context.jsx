@@ -16,7 +16,7 @@ export const Web3Provider = ({ children }) => {
   const [isAutoConnecting, setIsAutoConnecting] = useState(true);
 
   // Replace with deployed contract address
-  const CONTRACT_ADDRESS = "0x20cAB52EacDD1CC1237Af3D2E26b5595fb8B9471"; 
+  const CONTRACT_ADDRESS = "0x83618C06AC4598A7ed2d69099093Fab5248A48f9";
 
   const [networkError, setNetworkError] = useState('');
 
@@ -26,7 +26,7 @@ export const Web3Provider = ({ children }) => {
     try {
       if (window.ethereum) {
         const _provider = new ethers.BrowserProvider(window.ethereum);
-        
+
         // Network Check
         const network = await _provider.getNetwork();
         if (network.chainId !== 11155111n) {
@@ -37,7 +37,7 @@ export const Web3Provider = ({ children }) => {
 
         const _signer = await _provider.getSigner();
         const _account = await _signer.getAddress();
-        
+
         // Use abi.abi because Hardhat JSON artifacts wrap the ABI array
         const _contract = new ethers.Contract(CONTRACT_ADDRESS, abi.abi, _signer);
 
@@ -52,7 +52,7 @@ export const Web3Provider = ({ children }) => {
           // Also owner is admin
           const owner = await _contract.owner();
           setIsAdmin(adminStatus || _account.toLowerCase() === owner.toLowerCase());
-        } catch(e) {
+        } catch (e) {
           console.error("Error checking admin status", e);
         }
 
@@ -64,6 +64,14 @@ export const Web3Provider = ({ children }) => {
     } finally {
       if (!silent) setIsConnecting(false);
     }
+  };
+
+  const disconnectWallet = () => {
+    setAccount(null);
+    setSigner(null);
+    setContract(null);
+    setIsAdmin(false);
+    // Optionally, if you want to clear any local storage items you can do so here
   };
 
   // Auto-connect on page load if MetaMask already has authorized accounts
@@ -92,10 +100,7 @@ export const Web3Provider = ({ children }) => {
         if (accounts.length > 0) {
           connectWallet(true);
         } else {
-          setAccount(null);
-          setSigner(null);
-          setContract(null);
-          setIsAdmin(false);
+          disconnectWallet();
         }
       };
 
@@ -115,7 +120,11 @@ export const Web3Provider = ({ children }) => {
   }, []);
 
   return (
-    <Web3Context.Provider value={{ account, provider, signer, contract, isAdmin, isConnecting, isAutoConnecting, networkError, connectWallet }}>
+    <Web3Context.Provider value={{
+      account, provider, signer, contract, isAdmin,
+      isConnecting, isAutoConnecting, networkError,
+      connectWallet, disconnectWallet
+    }}>
       {children}
     </Web3Context.Provider>
   );

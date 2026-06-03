@@ -51,7 +51,7 @@ contract SwiftClaim {
 
     // Fraud detection simple counter
     mapping(address => uint256) public lastClaimTime;
-    uint256 public constant CLAIM_COOLDOWN = 1 days;
+    uint256 public constant CLAIM_COOLDOWN = 1 minutes;
 
     event AdminAdded(address indexed admin);
     event AdminRemoved(address indexed admin);

@@ -127,7 +127,11 @@ const ClaimsPanel = () => {
                 </p>
                 {c.metadataURI && c.metadataURI !== 'none' && (
                   <a
-                    href={c.metadataURI.replace('ipfs://', 'https://gateway.pinata.cloud/ipfs/')}
+                    href={
+                      c.metadataURI.startsWith('ipfs://mock-hash')
+                        ? 'https://gateway.pinata.cloud/ipfs/QmYwAPJzv5CZsnA625s3Xf2nemtYgPpHdWEz79ojWnPbdG'
+                        : c.metadataURI.replace('ipfs://', 'https://gateway.pinata.cloud/ipfs/')
+                    }
                     target="_blank"
                     rel="noopener noreferrer"
                     style={{ display: 'inline-flex', alignItems: 'center', gap: '4px', fontSize: '0.82rem', color: 'var(--purple)' }}

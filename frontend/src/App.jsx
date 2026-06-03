@@ -51,50 +51,68 @@ function App() {
           </div>
 
         ) : !account && !networkError ? (
-          /* ─── Landing / Connect Wallet ─── */
-          <div style={{ textAlign: 'center', marginTop: '80px', maxWidth: '480px', margin: '80px auto 0' }}>
-            {/* Hero icon */}
-            <div
-              style={{
-                width: 88,
-                height: 88,
-                background: 'linear-gradient(135deg, var(--purple), var(--indigo))',
-                borderRadius: 28,
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-                margin: '0 auto 28px',
-                boxShadow: '0 12px 32px rgba(124,58,237,0.35)',
-              }}
-            >
-              <Shield size={44} color="#fff" />
-            </div>
+          /* ─── Sign In / Sign Up Page ─── */
+          <div style={{
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            minHeight: 'calc(100vh - 160px)',
+            padding: '20px'
+          }}>
+            <div style={{
+              background: 'var(--card-bg)',
+              border: '1px solid var(--border)',
+              borderRadius: 'var(--radius-lg)',
+              padding: '48px',
+              maxWidth: '440px',
+              width: '100%',
+              textAlign: 'center',
+              boxShadow: '0 20px 40px rgba(0,0,0,0.4)',
+              backdropFilter: 'blur(10px)'
+            }}>
+              {/* Hero icon */}
+              <div
+                style={{
+                  width: 80,
+                  height: 80,
+                  background: 'linear-gradient(135deg, var(--purple), var(--indigo))',
+                  borderRadius: 24,
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  margin: '0 auto 24px',
+                  boxShadow: '0 12px 32px rgba(124,58,237,0.35)',
+                }}
+              >
+                <Shield size={40} color="#fff" />
+              </div>
 
-            <h1 style={{ fontSize: '2.4rem', fontWeight: 800, marginBottom: '12px', lineHeight: 1.2 }}>
-              Welcome to{' '}
-              <span className="gradient-text">SwiftClaim</span>
-            </h1>
-            <p style={{ color: 'var(--text-secondary)', fontSize: '1.05rem', marginBottom: '36px', lineHeight: 1.7 }}>
-              Decentralized, trustless insurance — buy policies and file claims
-              secured by smart contracts.
-            </p>
+              <h1 style={{ fontSize: '2rem', fontWeight: 800, marginBottom: '8px', lineHeight: 1.2 }}>
+                Welcome to <span className="gradient-text">SwiftClaim</span>
+              </h1>
+              <p style={{ color: 'var(--text-secondary)', fontSize: '0.95rem', marginBottom: '32px', lineHeight: 1.6 }}>
+                Sign in or create an account using your Web3 wallet. No password required.
+              </p>
 
-            <button
-              className="btn btn-primary btn-lg"
-              onClick={connectWallet}
-              disabled={isConnecting}
-              style={{ width: '100%', maxWidth: '320px' }}
-            >
-              {isConnecting ? 'Connecting…' : '🔗 Connect Wallet to Start'}
-            </button>
+              <button
+                className="btn btn-primary btn-lg"
+                onClick={connectWallet}
+                disabled={isConnecting}
+                style={{ width: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '10px' }}
+              >
+                {isConnecting ? (
+                  'Connecting...'
+                ) : (
+                  <>
+                    <img src="https://upload.wikimedia.org/wikipedia/commons/3/36/MetaMask_Fox.svg" alt="MetaMask" style={{ width: 24, height: 24 }} />
+                    Sign In / Sign Up with MetaMask
+                  </>
+                )}
+              </button>
 
-            {/* Feature chips */}
-            <div style={{ display: 'flex', justifyContent: 'center', gap: '10px', marginTop: '32px', flexWrap: 'wrap' }}>
-              {['Trustless', 'Transparent', 'Instant Payout', 'IPFS Proofs'].map(f => (
-                <span key={f} className="pill" style={{ background: 'var(--purple-dim)', color: 'var(--purple)' }}>
-                  {f}
-                </span>
-              ))}
+              <div style={{ marginTop: '24px', fontSize: '0.85rem', color: 'var(--text-muted)' }}>
+                By connecting, you agree to our Terms of Service and Privacy Policy.
+              </div>
             </div>
           </div>
 

@@ -3,14 +3,18 @@ import { Link, useLocation } from 'react-router-dom';
 import { useWeb3 } from '../../context/Web3Context';
 import {
   Shield, LayoutDashboard, ShoppingBag, FileText, Upload,
-  ClipboardList, PlusCircle, Wallet
+  ClipboardList, PlusCircle, Wallet, LogOut
 } from 'lucide-react';
 
+import { ethers } from 'ethers';
+
 const Header = () => {
-  const { account, isAdmin, contract } = useWeb3();
+  const { account, isAdmin, contract, provider, disconnectWallet } = useWeb3();
   const location = useLocation();
   const [policyCount, setPolicyCount] = useState(null);
   const [claimCount, setClaimCount]   = useState(null);
+  const [userBalance, setUserBalance] = useState(null);
+  const [contractBalance, setContractBalance] = useState(null);
 
   /* ── Dynamic stats ── */
   useEffect(() => {
@@ -30,8 +34,26 @@ const Header = () => {
       } catch (_) { /* silent */ }
     };
 
+    const loadBalances = async () => {
+      try {
+        if (provider && account) {
+          const bal = await provider.getBalance(account);
+          setUserBalance(ethers.formatEther(bal));
+        }
+        if (isAdmin && provider && contract) {
+          const cBal = await provider.getBalance(await contract.getAddress());
+          setContractBalance(ethers.formatEther(cBal));
+        }
+      } catch (_) { /* silent */ }
+    };
+
     load();
-  }, [contract, account, isAdmin]);
+    loadBalances();
+    
+    // Periodically refresh balances
+    const interval = setInterval(loadBalances, 10000);
+    return () => clearInterval(interval);
+  }, [contract, account, isAdmin, provider]);
 
   const userNav = [
     { to: '/user-dashboard', label: 'Dashboard',    icon: <LayoutDashboard size={15} /> },
@@ -133,11 +155,60 @@ const Header = () => {
             </div>
           )}
 
-          {/* Wallet address chip */}
+          {/* Wallet address chip and Balances */}
           {account && (
-            <div className="wallet-chip">
-              <Wallet size={13} />
-              {account.slice(0, 6)}…{account.slice(-4)}
+            <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+              
+              {/* Contract Balance (Admin only) */}
+              {isAdmin && contractBalance !== null && (
+                <div title="Contract Liquidity" style={{
+                  display: 'flex', alignItems: 'center', gap: '4px',
+                  fontSize: '0.75rem', fontWeight: 600,
+                  color: 'var(--success)', background: 'var(--success-dim)',
+                  padding: '4px 8px', borderRadius: 'var(--radius-sm)',
+                  border: '1px solid rgba(16,185,129,0.25)'
+                }}>
+                  Pool: {parseFloat(contractBalance).toFixed(4)} ETH
+                </div>
+              )}
+
+              {/* User Balance */}
+              {userBalance !== null && (
+                <div title="Your Balance" style={{
+                  display: 'flex', alignItems: 'center', gap: '4px',
+                  fontSize: '0.75rem', fontWeight: 600,
+                  color: 'var(--text-secondary)', background: 'var(--surface)',
+                  padding: '4px 8px', borderRadius: 'var(--radius-sm)',
+                  border: '1px solid var(--border-light)'
+                }}>
+                  {parseFloat(userBalance).toFixed(4)} ETH
+                </div>
+              )}
+
+              <div className="wallet-chip">
+                <Wallet size={13} />
+                {account.slice(0, 6)}…{account.slice(-4)}
+              </div>
+              <button
+                onClick={disconnectWallet}
+                title="Logout"
+                style={{
+                  background: 'transparent',
+                  border: 'none',
+                  color: 'var(--danger)',
+                  cursor: 'pointer',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  padding: '6px',
+                  borderRadius: 'var(--radius-sm)',
+                  transition: 'background 0.2s',
+                }}
+                onMouseEnter={(e) => e.currentTarget.style.background = 'var(--danger-dim)'}
+                onMouseLeave={(e) => e.currentTarget.style.background = 'transparent'}
+              >
+                <LogOut size={16} />
+              </button>
             </div>
           )}
         </div>
